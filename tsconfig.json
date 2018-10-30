@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "umd",
+        "declaration": false,
+        "lib": [
+            "dom",
+            "es2015"
+        ],
+        "noResolve": false,
+    },
+    "include": [
+        "src/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

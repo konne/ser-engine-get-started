@@ -1,0 +1,20 @@
+{
+    "name": "docker-reporting-example",
+    "version": "0.0.1",
+    "description": "example, for using sense excel reporting with docker",
+    "devDependencies": {
+        "typescript": "3.1.4",
+        "@types/enigma.js": "2.2.1",
+        "@types/qlik-engineapi": "12.67.6",
+        "@types/ws": "6.0.1"
+    },
+    "dependencies": {
+        "enigma.js": "2.3.0",
+        "jsonwebtoken": "8.3.0",
+        "ws": "6.1.0",
+        "xmlhttprequest": "1.8.0"
+    },
+    "scripts": {
+        "start": "tsc && node src/index"
+    }
+}

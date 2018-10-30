@@ -1,0 +1,11 @@
+{
+    "hostnameServer": "http://localhost",
+    "hostnameQlik": "ws://localhost:4848/app/engineData",
+    "appname": "Executive Dashboard",
+    "outputFormat": "pdf",
+    "templateName": "ExecutiveDashboard.xlsx",
+    "firstSelection": {
+        "field": "Account",
+        "value": "146572"
+    }
+}

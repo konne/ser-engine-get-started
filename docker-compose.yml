@@ -1,0 +1,23 @@
+version: "2"
+
+services:
+
+  engine:
+    image: qlikcore/engine:12.248.0
+    restart: always
+    command: -S DocumentDirectory=/apps -S AcceptEULA=yes -S MediaDirectory=/content
+
+    ports:
+      - "9076:9076"
+
+    volumes:
+      - ./apps:/apps
+      - ./data:/data
+      - ./content:/content
+      
+  ser-service:
+    image: senseexcel/ser-service:0.0.1-alpha
+    ports:
+      - 11271:11271
+    volumes:
+      - ./reports:/usr/src/app/Temp
