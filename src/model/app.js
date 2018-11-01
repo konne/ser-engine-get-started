@@ -54,13 +54,11 @@
                                     "general": {
                                         "cleanupTimeOut": 10,
                                         "timeout": 900,
-                                        "errorRepeatCount": 2,
-                                        "useUserSelections": "OnDemandOn"
+                                        "errorRepeatCount": 2
                                     },
                                     "template": {
                                         "input": "ExecutiveDashboard.xlsx",
-                                        "output": "Report",
-                                        "outputformat": "pdf",
+                                        "output": "='Report_'&only(Region)&'_'&max([Fiscal Year])&'.pdf'",
                                         "selections": [
                                             {
                                                 "type": "static",
@@ -182,12 +180,13 @@
                         console.log("taskCall data", taskRequest);
                         data += taskRequest;
                     });
-                    res.on("end", function (taskRequest) {
-                        console.log("taskCall end", taskRequest);
+                    res.on("end", function () {
+                        console.log("taskCall end");
                         var a = JSON.parse(data);
                         if (typeof (a[0]) === "undefined") {
                             console.log("RETRY");
                             _this.callTaskGet(id);
+                            return;
                         }
                         var status = a[0].status;
                         if (status === "RETRYERROR") {
@@ -216,24 +215,24 @@
         };
         App.prototype.getFinalReport = function (taskid) {
             var _this = this;
-            console.log(taskid);
+            console.log("getFinalReport", taskid);
             var options = {
                 hostname: this.config.hostnameServer,
                 port: 11271,
                 path: "/api/v1/file/" + taskid,
                 method: "GET"
             };
-            var data = "";
             var req = http.request(options, function (res) {
                 console.log("STATUS: " + res.statusCode);
-                res.setEncoding("utf8");
-                res.on("data", function (taskRequest) {
-                    data += taskRequest;
+                var data = [];
+                res.on("data", function (chunk) {
+                    console.log("DATA");
+                    data.push(chunk);
                 });
-                res.on("end", function (taskRequest) {
-                    data += taskRequest;
-                    // fs.writeFileSync(this.config.outputPath, data);
-                    fs.writeFile(_this.config.outputPath, data, 'utf8', function (err) {
+                res.on("end", function () {
+                    console.log("END");
+                    var dataByte = Buffer.concat(data);
+                    fs.writeFile(_this.config.outputPath, dataByte, "binary", function (err) {
                         if (err) {
                             return console.log(err);
                         }

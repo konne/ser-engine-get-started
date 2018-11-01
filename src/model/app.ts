@@ -63,13 +63,11 @@ export class App {
                                 "general": {
                                     "cleanupTimeOut": 10,
                                     "timeout": 900,
-                                    "errorRepeatCount": 2,
-                                    "useUserSelections": "OnDemandOn"
+                                    "errorRepeatCount": 2
                                 },
                                 "template": {
                                     "input": "ExecutiveDashboard.xlsx",
-                                    "output": "Report",
-                                    "outputformat": "pdf",
+                                    "output": "='Report_'&only(Region)&'_'&max([Fiscal Year])&'.pdf'",
                                     "selections": [
                                         {
                                             "type": "static",
@@ -125,7 +123,6 @@ export class App {
                     id = resId;
                 });
                 res.on("end", () => {
-
                     this.callTaskPost(jsonFile);
                     console.log("No more data in response.");
                 });
@@ -138,8 +135,6 @@ export class App {
             req.end();
 
         });
-
-
     }
 
     private _guid(): string {
@@ -150,7 +145,6 @@ export class App {
         }
         return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
     }
-
 
     private callTaskPost(jsonFile: Object) {
         console.log("callTaskPost");
@@ -185,8 +179,6 @@ export class App {
         req.write(JSON.stringify(jsonFile));
         req.end();
 
-
-
     }
 
     private callTaskGet(id: string) {
@@ -209,14 +201,15 @@ export class App {
                     console.log("taskCall data", taskRequest);
                     data += taskRequest;
                 });
-                res.on("end", (taskRequest) => {
-                    console.log("taskCall end", taskRequest);
+                res.on("end", () => {
+                    console.log("taskCall end");
 
                     const a = JSON.parse(data);
 
                     if (typeof (a[0]) === "undefined") {
                         console.log("RETRY");
                         this.callTaskGet(id);
+                        return;
 
                     }
                     let status = a[0].status;
@@ -252,10 +245,8 @@ export class App {
         }, 1000);
     }
 
-    getFinalReport(taskid: string) {
-        console.log(taskid);
-
-
+    private getFinalReport(taskid: string) {
+        console.log("getFinalReport", taskid);
 
         const options = {
             hostname: this.config.hostnameServer,
@@ -264,19 +255,22 @@ export class App {
             method: "GET"
         };
 
-        let data = "";
         const req = http.request(options, (res) => {
             console.log(`STATUS: ${res.statusCode}`);
-            res.setEncoding("utf8");
-            res.on("data", (taskRequest) => {
-                data += taskRequest;
+            let data = [];
+
+
+            res.on("data", (chunk) => {
+                console.log("DATA");
+                data.push(chunk);
             });
-            res.on("end", (taskRequest) => {
-                data += taskRequest;
+            res.on("end", () => {
+                console.log("END");
 
-                // fs.writeFileSync(this.config.outputPath, data);
+                let dataByte = Buffer.concat(data);
 
-                fs.writeFile(this.config.outputPath, data, 'utf8', function (err) {
+
+                fs.writeFile(this.config.outputPath, dataByte, "binary", (err) => {
                     if (err) {
                         return console.log(err);
                     }
@@ -291,6 +285,4 @@ export class App {
         });
         req.end();
     }
-
-
 }

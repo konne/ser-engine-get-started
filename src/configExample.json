@@ -1,11 +1,11 @@
 {
-    "hostnameServer": "http://localhost",
-    "hostnameQlik": "ws://localhost:4848/app/engineData",
-    "appname": "Executive Dashboard",
+    "hostnameServer": "localhost",
+    "hostnameQlik": "ws://localhost:9076/app/engineData",
+    "appname": "/apps/Executive Dashboard.qvf",
     "outputFormat": "pdf",
-    "templateName": "ExecutiveDashboard.xlsx",
+    "outputPath": "c:\\01Thomas\\report.pdf",
     "firstSelection": {
-        "field": "Account",
-        "value": "146572"
+        "field": "Fiscal Year",
+        "value": "2014"
     }
 }
