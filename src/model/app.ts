@@ -1,6 +1,7 @@
 //#region IMPORTS
 import * as http from "http";
 import * as fs from "fs";
+import * as path from "path";
 import { isNullOrUndefined } from "util";
 //#endregion
 
@@ -14,12 +15,14 @@ interface IAppConfig {
 
 export class App {
 
-    app: EngineAPI.IApp;
-
+    //#region variables
+    private app: EngineAPI.IApp;
     private global: EngineAPI.IGlobal;
     private appname: string;
     private config: IAppConfig;
     private url: string;
+    private path: string;
+    //#endregion
 
     constructor(config: IAppConfig, global: EngineAPI.IGlobal, appname: string, url: string) {
         this.global = global;
@@ -28,6 +31,7 @@ export class App {
         this.url = url;
     }
 
+    //#region public functions
     openDoc(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.global.openDoc(this.appname)
@@ -52,63 +56,96 @@ export class App {
         });
     }
 
-    createReport(): Promise<void> {
+    createReport(mode: string): Promise<void> {
         return new Promise((resolve, reject) => {
 
-            let postData = fs.readFileSync("./src/assets/ExecutiveDashboard.xlsx");
+            try {
+                this.path = this.checkPath(this.config.outputPath);
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+
+            let postData = fs.readFileSync(`./src/assets/${this.config.templateName}`);
+            let taskId = "";
+            let serJson: Object;
+
             const fileId: string = this._guid();
-            const serJson = this.createSERJson(fileId);
+
+            switch (mode) {
+                case "notShared":
+                     serJson = this.createSERJsonNoShared(fileId);
+                    break;
+
+                default:
+                    serJson = this.createSERJsonShared(fileId);
+                    break;
+            }
 
             const headers = {
-                    "SerFilename": "ExecutiveDashboard.xlsx"
+                "SerFilename": this.config.templateName
             };
 
             this.sendRequest("POST", `/api/v1/file/${fileId}`, headers, postData)
-                .then((data) => {
-                    let id = JSON.parse(data);
+                .then(() => {
+                    return this.sendRequest("POST", `/api/v1/task`, null, JSON.stringify(serJson));
 
-                    return this.sendRequest("POST", `/api/v1/task`, null, serJson);
                 })
                 .then((data) => {
-                    console.log(data);
-                    const taskId
+                    taskId = JSON.parse(data);
+
+                    let interval = setInterval(() => {
+                        this.sendRequest("GET", `/api/v1/task/${taskId}`)
+                            .then((data) => {
+                                let info = JSON.parse(data);
+
+                                if (typeof (info[0]) === "undefined") {
+                                    console.log("RETRY");
+                                    return;
+                                }
+
+                                let status = info[0].status;
+
+                                if (status === "RETRYERROR") {
+                                    console.log("NOT WORKING RETRYERROR");
+                                    clearInterval(interval);
+                                    resolve();
+                                }
+
+                                if (status === "SUCCESS") {
+                                    console.log("SUCCESS");
+                                    clearInterval(interval);
+                                    this.getFinalReport(taskId, info[0].reports)
+                                        .then(() => resolve())
+                                        .catch(error => reject(error));
+                                }
+
+                                if (status === "WARNING") {
+                                    console.log("WARNING");
+                                    clearInterval(interval);
+                                    this.getFinalReport(taskId, info[0].reports)
+                                        .then(() => resolve())
+                                        .catch(error => reject(error));
+                                }
+
+                                if (status === "ERROR") {
+                                    console.log("NOT WORKING ERROR");
+                                    clearInterval(interval);
+                                    resolve();
+                                }
+
+                            })
+                            .catch();
+                    }, 1000);
+
                 })
                 .catch(error => reject(error));
 
-
-            // const options = {
-            //     hostname: this.config.hostnameServer,
-            //     port: 11271,
-            //     path: `/api/v1/file/${fileId}?filename=ExecutiveDashboard.xlsx`,
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "text/plain"
-            //     }
-            // };
-
-            // let id = "";
-            // const req = http.request(options, (res) => {
-            //     console.log(`STATUS: ${res.statusCode}`);
-            //     console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-            //     res.setEncoding("utf8");
-            //     res.on("data", (resId) => {
-            //         id = resId;
-            //     });
-            //     res.on("end", () => {
-            //         this.callTaskPost(jsonFile);
-            //         console.log("No more data in response.");
-            //     });
-            // });
-
-            // req.on("error", (e) => {
-            //     console.error(`problem with request: ${e.message}`);
-            // });
-            // req.write(postData);
-            // req.end();
-
         });
     }
+    //#endregion
 
+    //#region private functions
     private _guid(): string {
         function s4() {
             return Math.floor((1 + Math.random()) * 0x10000)
@@ -118,147 +155,50 @@ export class App {
         return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
     }
 
-    private callTaskPost(jsonFile: Object) {
-        console.log("callTaskPost");
+    private getFinalReport(taskid: string, reports: any[]): Promise<void> {
 
-        const options = {
-            hostname: this.config.hostnameServer,
-            port: 11271,
-            path: `/api/v1/task`,
-            method: "POST",
-            headers: {
-                "Content-Type": "text/plain"
+        return new Promise((resolve, reject) => {
+
+            const promises: Promise<void>[] = [];
+
+            for (const report of reports) {
+
+                const arrPath: string[] = report.paths[0].split("/");
+                const reportId = arrPath[arrPath.length - 1];
+
+                promises.push(this.getReport(taskid, reportId, report.name));
             }
-        };
-        let id2 = "";
-        const req = http.request(options, (res) => {
-            console.log(`STATUS: ${res.statusCode}`);
-            res.setEncoding("utf8");
-            res.on("data", (taskRequest) => {
-                id2 = taskRequest;
-                console.log("taskCall", taskRequest);
-            });
-            res.on("end", () => {
 
-                this.callTaskGet(JSON.parse(id2));
-                console.log("No more data in response.");
-            });
+            Promise.all(promises)
+                .then(() => resolve())
+                .catch(error => reject(error));
         });
-
-        req.on("error", (e) => {
-            console.error(`problem with request: ${e.message}`);
-        });
-        req.write(JSON.stringify(jsonFile));
-        req.end();
 
     }
 
-    private callTaskGet(id: string) {
-        console.log("callTaskGet");
-        setTimeout(() => {
+    private getReport(taskid: string, reportId: string, reportName: string): Promise<void> {
+        return new Promise((resolve, reject) => {
 
-
-            const options = {
-                hostname: this.config.hostnameServer,
-                port: 11271,
-                path: `/api/v1/task/${id}`,
-                method: "GET"
+            const headers = {
+                "SerFilename": reportId
             };
 
-            let data = "";
-            const req = http.request(options, (res) => {
-                console.log(`STATUS: ${res.statusCode}`);
-                res.setEncoding("utf8");
-                res.on("data", (taskRequest) => {
-                    console.log("taskCall data", taskRequest);
-                    data += taskRequest;
-                });
-                res.on("end", () => {
-                    console.log("taskCall end");
-
-                    const a = JSON.parse(data);
-
-                    if (typeof (a[0]) === "undefined") {
-                        console.log("RETRY");
-                        this.callTaskGet(id);
-                        return;
-
-                    }
-                    let status = a[0].status;
-
-                    if (status === "RETRYERROR") {
-                        console.log("NOT WORKING RETRYERROR");
-                        return;
-                    }
-
-                    if (status === "SUCCESS") {
-                        console.log("SUCCESS");
-                        this.getFinalReport(id);
-                        return;
-                    }
-
-                    if (status === "ERROR") {
-                        console.log("NOT WORKING ERROR");
-                        return;
-                    }
-
-
-                    setTimeout(() => {
-                        this.callTaskGet(id);
-                    }, 1000);
-                });
-            });
-
-            req.on("error", (e) => {
-                console.error(`problem with request: ${e.message}`);
-            });
-            req.end();
-
-        }, 1000);
+            this.sendRequest("GET", `/api/v1/file/${taskid}`, headers)
+                .then((data) => {
+                    fs.writeFile(`${this.path}\\${reportName}`, Buffer.concat(data), "binary", (error) => {
+                        if (error) {
+                            reject(error);
+                        }
+                        console.log("The file was saved!");
+                        resolve();
+                    });
+                })
+                .catch(error => reject(error));
+        });
     }
 
-    private getFinalReport(taskid: string) {
-        console.log("getFinalReport", taskid);
-
-        const options = {
-            hostname: this.config.hostnameServer,
-            port: 11271,
-            path: `/api/v1/file/${taskid}`,
-            method: "GET"
-        };
-
-        const req = http.request(options, (res) => {
-            console.log(`STATUS: ${res.statusCode}`);
-            let data = [];
-
-
-            res.on("data", (chunk) => {
-                console.log("DATA");
-                data.push(chunk);
-            });
-            res.on("end", () => {
-                console.log("END");
-
-                let dataByte = Buffer.concat(data);
-
-
-                fs.writeFile(this.config.outputPath, dataByte, "binary", (err) => {
-                    if (err) {
-                        return console.log(err);
-                    }
-
-                    console.log("The file was saved!");
-                });
-            });
-        });
-
-        req.on("error", (e) => {
-            console.error(`problem with request: ${e.message}`);
-        });
-        req.end();
-    }
-
-    private sendRequest(methode: "GET" | "POST", path: string, headers: any, postData?: any): Promise<any> {
+    private sendRequest(methode: "GET" | "POST", path: string, headers?: any, postData?: any): Promise<any> {
+        console.log("sendRequest", path);
 
         return new Promise((resolve, reject) => {
 
@@ -269,8 +209,9 @@ export class App {
                 method: methode,
             };
 
-            if (isNullOrUndefined(headers)) {
-                options = { ...options,
+            if (!isNullOrUndefined(headers)) {
+                options = {
+                    ...options,
                     headers: headers
                 };
             }
@@ -279,7 +220,6 @@ export class App {
                 const data = [];
 
                 response.on("data", (chunk) => {
-                    console.log("chunk", chunk);
                     data.push(chunk);
                 });
 
@@ -307,7 +247,7 @@ export class App {
         });
     }
 
-    private createSERJson(fileId: string): Object {
+    private createSERJsonNoShared(fileId: string): Object {
         return {
             "tasks": [
                 {
@@ -357,4 +297,61 @@ export class App {
             "uploadGuids": [fileId]
         };
     }
+
+    private createSERJsonShared(fileId: string): Object {
+        return {
+            "tasks": [
+                {
+                    "reports": [
+                        {
+                            "general": {
+                                "cleanupTimeOut": 10,
+                                "timeout": 900,
+                                "errorRepeatCount": 2,
+                                "useUserSelections": "OnDemandOn"
+                            },
+                            "template": {
+                                "input": "ExecutiveDashboard.xlsx",
+                                "output": "OnDemand"
+                            },
+                            "distribute": {},
+                            "connections": [
+                                {
+                                    "serverUri": this.url.split("/app/engineData")[0],
+                                    "app": "engineData",
+                                    "identities": [this.url.split("identity/")[1]],
+                                    "sslValidThumbprints": [
+                                        {
+                                            "url": "https://nb-fc-208000/ser",
+                                            "thumbprint": "e0e1b550a72365bdbf2aa9a0c5ecc320e35b5985"
+                                        }
+                                    ],
+                                    "credentials": {
+                                        "type": "NONE"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "uploadGuids": [fileId]
+        };
+    }
+
+    private checkPath(path: string) {
+
+        var replacedPath = path.replace(/%([^%]+)%/g, (_, n) => {
+            return process.env[n];
+        });
+
+        if (!fs.existsSync(replacedPath)) {
+            fs.mkdirSync(replacedPath);
+            return replacedPath;
+        }
+
+        return replacedPath;
+    }
+    //#endregion
+
 }

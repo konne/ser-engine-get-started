@@ -25,21 +25,30 @@ function run() {
             );
             return app.openDoc();
         })
-        // .then(() => {
-        //     console.log("doc opened");
-        //     return app.selectValue(config.firstSelection.field, config.firstSelection.value);
-        // })
+        .then(() => {
+            console.log("doc opened");
+            return app.selectValue(config.firstSelection.field, config.firstSelection.value);
+        })
         .then(() => {
             console.log("values selected");
-            return app.createReport();
+            return app.createReport("shared");
+        })
+        .then(() => {
+            console.log("values selected");
+            return app.createReport("notShared");
         })
         .then(() => {
             console.log("Report created selected");
+            return connection.closeSession();
+        })
+        .then(() => {
             process.exit();
         })
         .catch(error => {
             console.error(error);
-            process.exit();
+            connection.closeSession()
+            .then(() => process.exit())
+            .catch(error => process.exit());
         });
 }
 
