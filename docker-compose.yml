@@ -16,8 +16,8 @@ services:
       - ./content:/content
       
   ser-service:
-    image: senseexcel/ser-service:0.0.1-alpha
+    image: senseexcel/ser-service:0.0.2-alpha
     ports:
-      - 11271:11271
+      - 11271:80
     volumes:
       - ./reports:/usr/src/app/Temp
