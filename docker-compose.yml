@@ -21,3 +21,4 @@ services:
       - 11271:80
     volumes:
       - ./reports:/usr/src/app/Temp
+      - ./fonts/calibri:/usr/share/fonts/calibri

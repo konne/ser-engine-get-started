@@ -5,6 +5,9 @@ This is a example of how to use sense excel reporting in docker. It shows how to
 ## How to use this example
 - clone or download this repository
 - copy the docker-compose file to your docker enviroment
-- run docker-compose up in docker enviroment
+- create apps folder next to docker-compose file and include "Executive Dashboard.qvf"
+- create reports folder next to docker-compose file (just for debugging purpose)
+- create fonts folder next to docker-compose file and insert calibri font to the folder (required for report layout, not mandatory)
+- run "docker-compose up" in docker enviroment
 - check if the credentials in src/config.json are correct
 - go back to downloaded repository and "run npm run start"
