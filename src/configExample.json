@@ -1,6 +1,6 @@
 {
-    "hostnameServer": "172.30.1.157",
-    "hostnameQlik": "ws://172.30.1.157:9076/app/engineData",
+    "hostnameServer": "[IP or domain]",
+    "hostnameQlik": "ws://[IP or domain]:9076/app/engineData",
     "appname": "/apps/Executive Dashboard.qvf",
     "templateName": "ExecutiveDashboard.xlsx",
     "outputFormat": "pdf",

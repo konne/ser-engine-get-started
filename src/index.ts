@@ -41,7 +41,7 @@ function run() {
         .then(() => {
             console.log("shared report created");
             console.log(" ");
-            console.log("create loop report");
+            console.log("create file loop report");
             return app.createReport("notShared");
         })
         .then(() => {

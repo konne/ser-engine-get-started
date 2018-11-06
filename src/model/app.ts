@@ -86,8 +86,11 @@ export class App {
                 "SerFilename": this.config.templateName
             };
 
+            console.log("send request: Upload Template");
             this.sendRequest("POST", `/api/v1/file/${fileId}`, headers, postData)
                 .then(() => {
+
+                    console.log("send request: Start Creating Report");
                     return this.sendRequest("POST", `/api/v1/task`, null, JSON.stringify(serJson));
 
                 })
@@ -95,6 +98,7 @@ export class App {
                     taskId = JSON.parse(data);
 
                     let interval = setInterval(() => {
+                        console.log("send request: Get Status - running");
                         this.sendRequest("GET", `/api/v1/task/${taskId}`)
                             .then((data) => {
                                 let info = JSON.parse(data);
@@ -183,6 +187,7 @@ export class App {
                 "SerFilename": reportId
             };
 
+            console.log("send request: Get Report");
             this.sendRequest("GET", `/api/v1/file/${taskid}`, headers)
                 .then((data) => {
                     fs.writeFile(`${this.path}\\${reportName}`, Buffer.concat(data), "binary", (error) => {
@@ -198,7 +203,6 @@ export class App {
     }
 
     private sendRequest(methode: "GET" | "POST", path: string, headers?: any, postData?: any): Promise<any> {
-        console.log("sendRequest", path);
 
         return new Promise((resolve, reject) => {
 
