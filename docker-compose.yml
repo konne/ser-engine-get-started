@@ -3,7 +3,7 @@ version: "2"
 services:
 
   engine:
-    image: qlikcore/engine:12.248.0
+    image: qlikcore/engine:12.260.0
     restart: always
     command: -S DocumentDirectory=/apps -S AcceptEULA=yes -S MediaDirectory=/content
 
