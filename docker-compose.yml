@@ -16,9 +16,9 @@ services:
       - ./content:/content
       
   ser-service:
-    image: senseexcel/ser-service:0.0.2-alpha
+    image: senseexcel/ser-engine:0.0.2-alpha
     ports:
-      - 11271:80
+      - 11271:11271
     volumes:
       - ./reports:/usr/src/app/Temp
       - ./fonts/calibri:/usr/share/fonts/calibri
