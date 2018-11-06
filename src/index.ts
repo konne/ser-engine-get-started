@@ -23,25 +23,34 @@ function run() {
                 config.appname,
                 connection.url
             );
+            console.log("open document");
             return app.openDoc();
         })
         .then(() => {
-            console.log("doc opened");
+            console.log("document opened");
+            console.log(" ");
+            console.log("select value");
             return app.selectValue(config.firstSelection.field, config.firstSelection.value);
         })
         .then(() => {
             console.log("values selected");
+            console.log(" ");
+            console.log("create shared report on demand");
             return app.createReport("shared");
         })
         .then(() => {
-            console.log("values selected");
+            console.log("shared report created");
+            console.log(" ");
+            console.log("create loop report");
             return app.createReport("notShared");
         })
         .then(() => {
-            console.log("Report created selected");
+            console.log("Report created");
             return connection.closeSession();
         })
         .then(() => {
+            console.log(" ");
+            console.log("example finished");
             process.exit();
         })
         .catch(error => {
