@@ -10,4 +10,5 @@ This is a example of how to use sense excel reporting in docker. It shows how to
 - create fonts folder next to docker-compose file and insert calibri font to the folder (required for report layout, not mandatory)
 - run "docker-compose up" in docker enviroment
 - check if the credentials in src/config.json are correct
-- go back to downloaded repository and "run npm run start"
+- go back to downloaded repository and "npm install"
+- run "npm run start"

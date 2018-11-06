@@ -10,9 +10,7 @@
     },
     "dependencies": {
         "enigma.js": "2.3.0",
-        "jsonwebtoken": "8.3.0",
-        "ws": "6.1.0",
-        "xmlhttprequest": "1.8.0"
+        "ws": "6.1.0"
     },
     "scripts": {
         "start": "tsc && node src/index"
