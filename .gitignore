@@ -1,6 +1,7 @@
 package-lock.json
 src/config.json
 *.js
+ser-engine-rest
 
 # Logs
 logs

@@ -6,11 +6,14 @@
         "typescript": "3.1.4",
         "@types/enigma.js": "2.2.1",
         "@types/qlik-engineapi": "12.67.6",
-        "@types/ws": "6.0.1"
+        "@types/ws": "6.0.1",
+        "@types/request": " 2.48.1"
     },
     "dependencies": {
-        "enigma.js": "2.3.0",
-        "ws": "6.1.0"
+        "enigma.js": "2.4.0",
+        "ws": "6.1.0",
+        "ser.api": "3.4.2",
+        "request": "2.88.0"
     },
     "scripts": {
         "start": "tsc && node src/index"

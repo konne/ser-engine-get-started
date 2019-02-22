@@ -1,64 +1,124 @@
-const config = require("./config.json");
-import { Connection } from "./model/connection";
-import { App } from "./model/app";
+const schema = require("../node_modules/enigma.js/schemas/12.170.2.json");
+import * as fs from "fs";
+import * as request from "request";
 
-function run() {
-    console.log("example started", config.hostnameQlik);
+async function run() {
 
-    let connection = new Connection({ hostname: config.hostnameQlik });
-    let app: App;
+    let uploadFile = fs.readFileSync(`./src/assets/Sales.xlsx`);
+    console.log("file loaded");
 
-    connection.openSession()
-        .then(global => {
-            console.log("session opened");
-            app = new App(
-                {
-                    hostnameQlik: config.hostnameQlik,
-                    hostnameServer: config.hostnameServer,
-                    appname: config.appname,
-                    templateName: config.templateName,
-                    outputPath: config.outputPath
-                },
-                global,
-                config.appname,
-                connection.url
-            );
-            console.log("open document");
-            return app.openDoc();
-        })
-        .then(() => {
-            console.log("document opened");
-            console.log(" ");
-            console.log("select value");
-            return app.selectValue(config.firstSelection.field, config.firstSelection.value);
-        })
-        .then(() => {
-            console.log("values selected");
-            console.log(" ");
-            console.log("create shared report on demand");
-            return app.createReport("shared");
-        })
-        .then(() => {
-            console.log("shared report created");
-            console.log(" ");
-            console.log("create file loop report");
-            return app.createReport("notShared");
-        })
-        .then(() => {
-            console.log("Report created");
-            return connection.closeSession();
-        })
-        .then(() => {
-            console.log(" ");
-            console.log("example finished");
-            process.exit();
-        })
-        .catch(error => {
-            console.error(error);
-            connection.closeSession()
-            .then(() => process.exit())
-            .catch(error => process.exit());
-        });
+    const fileId = await postFile(uploadFile);
+    console.log("fileId", fileId);
+
+    const taskId = await postTask(fileId);
+    console.log("taskId", taskId);
+
+    await (async () => {
+        while (true) {
+            await delay();
+            const status = await getTask(taskId);
+            if (status === "SUCCESS" || status === "ERROR" || status === "RETRYERROR") {
+                console.log("Task Status: ", status);
+                break;
+            }
+        }
+    })();
+    console.log("task finished");
+
+    const fileBuffer = await getFile(taskId);
+    fs.writeFileSync(`outfile.zip`, fileBuffer);
+    console.log("File saved");
 }
 
-run();
+async function delay(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+            resolve();
+        }, 1000)
+    });
+}
+
+async function postFile(data): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        let options = {
+            headers: {
+                "serfilename": "Sales.xlsx",
+                "serunzip": false,
+                "Content-Type": "application/octet-stream"
+            }
+        }
+        let req = request.post("http://localhost:8099/api/v1/file", options, (err, res, body) => {
+            resolve(JSON.parse(body).operationId);
+        });
+        req.body = data;
+    });
+}
+
+async function postTask(fileId): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        const serJson = {
+            "tasks": [
+                {
+                    "reports": [
+                        {
+                            "general": {},
+                            "template": {
+                                "input": "Sales.xlsx",
+                                "output": "output.pdf"
+                            },
+                            "distribute": {},
+                            "connections": [
+                                {
+                                    "serverUri": "ws://engine:9076",
+                                    "app": "/apps/Sales.qvf",
+                                    "credentials": {
+                                        "type": "NONE"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "uploadGuids": [fileId]
+        };
+        const options = {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+        let req = request.post("http://localhost:8099/api/v1/task", options, (err, res, body) => {
+            resolve(JSON.parse(body).operationId);
+        });
+        req.body = JSON.stringify(serJson);
+    });
+}
+
+async function getTask(id) {
+    return new Promise((resolve, reject) => {
+        let req = request.get(`http://localhost:8099/api/v1/task/${id}`, (err, res, body) => {
+            resolve(JSON.parse(body).results[0].status);
+        });
+    });
+}
+
+async function getFile(id): Promise<Buffer> {
+    return new Promise<Buffer>((resolve, reject) => {
+        let req = request.get(`http://localhost:8099/api/v1/file/${id}`);
+        let bufferArray = [];
+        req.on("data", (res: Buffer) => {
+            bufferArray.push(res);
+        })
+        req.on("complete", () => {
+            resolve(Buffer.concat(bufferArray));
+        })
+        req.end();
+    });
+}
+
+async function runSync() {
+    await run();
+    console.log("FINISHED");
+    process.exit();
+}
+runSync();

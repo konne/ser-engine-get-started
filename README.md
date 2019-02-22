@@ -1,14 +1,23 @@
 # ser-engine-get-started
 Get Start with the Docker Container of the Sense Excel Reporting Engine.
-This is a example of how to use sense excel reporting in docker. It shows how to make a on demand report, and how to create several reports dependend from selection made in the configuration, send to sense excel reportin service.
+
+This is a basic example of how to use sense excel reporting with docker-compose. It shows you how to run basic commands against the ser REST service. The goal is to run a simple report and store the results in the file system.
+
+The basic features which this repository shows are:
+- set up a docker-compose file with qlik core and ser rest service 
+- upload file
+- create task
+- check status of running task
+- download result
+
+
+## Requirements
+- have docker (docker-compose) installed on your system
+- have node.js installed on your system
+
 
 ## How to use this example
-- clone or download this repository
-- copy the docker-compose file to your docker enviroment
-- create apps folder next to docker-compose file and include "Executive Dashboard.qvf"
-- create reports folder next to docker-compose file (just for debugging purpose)
-- create fonts folder next to docker-compose file and insert calibri font to the folder (required for report layout, not mandatory)
+- clone or download this repository to a enviroment where docker-compose and node.js is installed
+- run "npm install" inside the cloned repository
 - run "docker-compose up" in docker enviroment
-- check if the credentials in src/config.json are correct
-- go back to downloaded repository and "npm install"
 - run "npm run start"
