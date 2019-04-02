@@ -49,7 +49,8 @@ async function postFile(data): Promise<string> {
         }
         let req = request.post("http://localhost:15485/api/v1/file", options, (err, res, body) => {
             if (err) {
-                console.error("error", err)
+                console.error("error", err);
+                reject(err);
             }
             resolve(JSON.parse(body).operationId);
         });
@@ -92,7 +93,8 @@ async function postTask(fileId): Promise<string> {
         };
         let req = request.post("http://localhost:15485/api/v1/task", options, (err, res, body) => {
             if (err) {
-                console.error("error", err)
+                console.error("error", err);
+                reject(err);
             }
             resolve(JSON.parse(body).operationId);
         });
@@ -104,7 +106,8 @@ async function getTask(id) {
     return new Promise((resolve, reject) => {
         let req = request.get(`http://localhost:15485/api/v1/task/${id}`, (err, res, body) => {
             if (err) {
-                console.error("error", err)
+                console.error("error", err);
+                reject(err);
             }
             resolve(JSON.parse(body).results[0].status);
         });
@@ -122,7 +125,8 @@ async function getFile(id): Promise<Buffer> {
             resolve(Buffer.concat(bufferArray));
         })
         req.on("error", (err) => {
-            console.error("error", err)
+            console.error("error", err);
+            reject(err);
         })
         req.end();
     });
