@@ -3,22 +3,12 @@ version: "2"
 services:
 
   engine:
-    image: qlikcore/engine:12.260.0
-    restart: always
+    image: qlikcore/engine:12.345.0
     command: -S DocumentDirectory=/apps -S AcceptEULA=yes -S MediaDirectory=/content
-
-    ports:
-      - "9076:9076"
-
     volumes:
-      - ./apps:/apps
-      - ./data:/data
-      - ./content:/content
-      
+      - ./src/assets/apps:/apps
+
   ser-service:
-    image: senseexcel/ser-engine:0.0.2-alpha
+    image: senseexcel/ser-engine
     ports:
-      - 11271:11271
-    volumes:
-      - ./reports:/usr/src/app/Temp
-      - ./fonts/calibri:/usr/share/fonts/calibri
+      - 15485:80

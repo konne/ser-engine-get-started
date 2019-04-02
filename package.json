@@ -3,14 +3,13 @@
     "version": "0.0.1",
     "description": "example, for using sense excel reporting with docker",
     "devDependencies": {
-        "typescript": "3.1.4",
-        "@types/enigma.js": "2.2.1",
-        "@types/qlik-engineapi": "12.67.6",
-        "@types/ws": "6.0.1"
+        "@types/node": "^11.13.0",
+        "@types/request": "2.48.1",
+        "typescript": "3.4.1"
     },
     "dependencies": {
-        "enigma.js": "2.3.0",
-        "ws": "6.1.0"
+        "request": "2.88.0",
+        "ser.api": "3.4.2"
     },
     "scripts": {
         "start": "tsc && node src/index"
