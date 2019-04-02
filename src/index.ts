@@ -1,17 +1,17 @@
-const schema = require("../node_modules/enigma.js/schemas/12.170.2.json");
 import * as fs from "fs";
 import * as request from "request";
 
 async function run() {
-
     let uploadFile = fs.readFileSync(`./src/assets/Sales.xlsx`);
-    console.log("file loaded");
+    console.log("file read in");
 
+    console.log("post file to ser service");
     const fileId = await postFile(uploadFile);
-    console.log("fileId", fileId);
+    console.log("file uploaded, received fileId:", fileId);
 
+    console.log("post task to ser service");
     const taskId = await postTask(fileId);
-    console.log("taskId", taskId);
+    console.log("file uploaded, received taskId  taskId", taskId);
 
     await (async () => {
         while (true) {
@@ -23,11 +23,11 @@ async function run() {
             }
         }
     })();
-    console.log("task finished");
+    console.log("task has finished");
 
     const fileBuffer = await getFile(taskId);
-    fs.writeFileSync(`outfile.zip`, fileBuffer);
-    console.log("File saved");
+    fs.writeFileSync(`result.zip`, fileBuffer);
+    console.log("File saved in root folder");
 }
 
 async function delay(): Promise<void> {
@@ -47,7 +47,10 @@ async function postFile(data): Promise<string> {
                 "Content-Type": "application/octet-stream"
             }
         }
-        let req = request.post("http://localhost:8099/api/v1/file", options, (err, res, body) => {
+        let req = request.post("http://localhost:15485/api/v1/file", options, (err, res, body) => {
+            if (err) {
+                console.error("error", err)
+            }
             resolve(JSON.parse(body).operationId);
         });
         req.body = data;
@@ -87,7 +90,10 @@ async function postTask(fileId): Promise<string> {
                 "Content-Type": "application/json"
             }
         };
-        let req = request.post("http://localhost:8099/api/v1/task", options, (err, res, body) => {
+        let req = request.post("http://localhost:15485/api/v1/task", options, (err, res, body) => {
+            if (err) {
+                console.error("error", err)
+            }
             resolve(JSON.parse(body).operationId);
         });
         req.body = JSON.stringify(serJson);
@@ -96,7 +102,10 @@ async function postTask(fileId): Promise<string> {
 
 async function getTask(id) {
     return new Promise((resolve, reject) => {
-        let req = request.get(`http://localhost:8099/api/v1/task/${id}`, (err, res, body) => {
+        let req = request.get(`http://localhost:15485/api/v1/task/${id}`, (err, res, body) => {
+            if (err) {
+                console.error("error", err)
+            }
             resolve(JSON.parse(body).results[0].status);
         });
     });
@@ -104,7 +113,7 @@ async function getTask(id) {
 
 async function getFile(id): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
-        let req = request.get(`http://localhost:8099/api/v1/file/${id}`);
+        let req = request.get(`http://localhost:15485/api/v1/file/${id}`);
         let bufferArray = [];
         req.on("data", (res: Buffer) => {
             bufferArray.push(res);
@@ -112,13 +121,24 @@ async function getFile(id): Promise<Buffer> {
         req.on("complete", () => {
             resolve(Buffer.concat(bufferArray));
         })
+        req.on("error", (err) => {
+            console.error("error", err)
+        })
         req.end();
     });
 }
 
 async function runSync() {
+    console.log("*****************************************")
+    console.log("*     Start running SER Get Started     *")
+    console.log("*****************************************")
+
     await run();
-    console.log("FINISHED");
+
+    console.log("*****************************************")
+    console.log("*               Finished                *")
+    console.log("*****************************************")
+
     process.exit();
 }
 runSync();

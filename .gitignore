@@ -2,6 +2,7 @@ package-lock.json
 src/config.json
 *.js
 ser-engine-rest
+result.zip
 
 # Logs
 logs
