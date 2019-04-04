@@ -1,6 +1,11 @@
 {
     "name": "docker-reporting-example",
     "version": "0.0.1",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/senseexcel/ser-engine-get-started"
+    },
     "description": "example, for using sense excel reporting with docker",
     "devDependencies": {
         "@types/node": "^11.13.0",
