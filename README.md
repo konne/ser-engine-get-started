@@ -13,11 +13,13 @@ The basic features which this repository shows are:
 
 ## Requirements
 - have docker (docker-compose) installed on your system
-- have node.js installed on your system
+- have node.js installed on your system (node.js > 6.x)
 
 
 ## How to use this example
 - clone or download this repository to a enviroment where docker-compose and node.js is installed
-- run "npm install" inside the cloned repository
-- run "docker-compose up" in docker enviroment
+- run "npm install" inside the cloned/downloaded repository
+- run "docker-compose up -d" in docker enviroment
 - run "npm run start"
+- run "docker-compose down" to stop docker containers
+- to see the result check the result.zip file in root folder of the cloned/downloded repository
