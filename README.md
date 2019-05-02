@@ -23,3 +23,6 @@ The basic features which this repository shows are:
 - run "npm run start"
 - run "docker-compose down" to stop docker containers
 - to see the result check the result.zip file in root folder of the cloned/downloded repository
+
+## IMPORTANT
+If error occured, please check the qlik engine version in the docker-compose.yml line 6. You can find the resently updated Versions of the Qlik Engine on the following website: https://hub.docker.com/r/qlikcore/engine/tags.
