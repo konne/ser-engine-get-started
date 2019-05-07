@@ -42,8 +42,8 @@ async function postFile(data): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         let options = {
             headers: {
-                "serfilename": "Sales.xlsx",
-                "serunzip": false,
+                "filename": "Sales.xlsx",
+                "unzip": false,
                 "Content-Type": "application/octet-stream"
             }
         }
